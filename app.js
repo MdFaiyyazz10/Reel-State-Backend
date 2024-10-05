@@ -20,7 +20,9 @@ cloudinary.config({
 });
 
 
-
+app.get('/' , (req,res,next) => {
+    res.send("<h1>Working</h1>")
+})
 
 
 // Middleware 
@@ -52,9 +54,11 @@ app.use('/api/v1/gallery', galleryRouter);
 
 
 
+
 app.listen(process.env.PORT , () => {
     console.log(`Server is Running on PORT:${process.env.PORT}`)
 })
+
 
 
 
