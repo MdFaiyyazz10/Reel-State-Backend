@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import validator from "validator"; // Import validator
 
 const userSchema = mongoose.Schema({
     name: {
@@ -7,23 +8,28 @@ const userSchema = mongoose.Schema({
     },
     email: {
         type: String,
-        required: true,
-        unique: true,
-    },
-    phone: {
-        type: String,
-        required: true,
+        required: [true, "Please enter an email"],
+        unique: [true, "Email already exists"],
+        validate: validator.isEmail
     },
     password: {
         type: String,
-        required: true,
-    },
+        required: [true, "Please enter a password"],
+        minlength: [8, "Password must be at least 8 characters long"],
+    }, 
+   
     otp: {
         type: String,
     },
     otpExpires: {
         type: Date,
+    },
+    role: {
+        type: String,
+        default: "user"
     }
 });
 
 export const User = mongoose.model("User", userSchema);
+
+

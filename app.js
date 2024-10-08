@@ -44,12 +44,13 @@ import blogRouter from './routes/blog.js'
 import userRouter from './routes/user.js'
 import adminRouter from './routes/admin.js'
 import galleryRouter from './routes/gallery.js'
+import messageRouter from './routes/message.js'
 
 
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/blog' , blogRouter)
 app.use('/api/v1/admin', adminRouter);
-app.use('/api/v1/gallery', galleryRouter);
+app.use('/api/v1/user', messageRouter);
 
 
 
