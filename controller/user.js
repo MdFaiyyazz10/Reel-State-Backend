@@ -34,7 +34,7 @@ export const registerUser = async (req, res) => {
 
         res.status(201).json({ success: true, message: 'User registered successfully' });
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).json({ success: false, message: error.message, error });
     }
 };
@@ -69,7 +69,7 @@ export const signIn = async (req, res) => {
             expires: expireDate
         }).json({ success: true, message: "Logged In Successfully", user, token });
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
@@ -84,7 +84,7 @@ export const requestForgetPassword = async (req, res) => {
         }
 
         const otp = crypto.randomInt(100000, 999999).toString();
-        const otpExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
+        const otpExpires = Date.now() + 1 * 60 * 1000; // 5 minutes
 
         user.otp = otp;
         user.otpExpires = otpExpires;
@@ -93,7 +93,7 @@ export const requestForgetPassword = async (req, res) => {
         await sendOtpEmail(email, otp);
         res.status(200).json({ message: 'OTP sent to email' });
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).json({ message: 'Error requesting password reset', error });
     }
 };
@@ -116,7 +116,7 @@ export const verifyResetOtp = async (req, res) => {
 
         res.status(200).json({ message: 'OTP verified, you can reset your password', userId: user._id });
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).json({ message: 'Error verifying OTP', error });
     }
 };
@@ -138,7 +138,7 @@ export const resetPassword = async (req, res) => {
 
         res.status(200).json({ message: 'Password reset successfully' });
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).json({ message: 'Error resetting password', error });
     }
 };
@@ -156,7 +156,7 @@ export const resendOtp = async (req, res) => {
 
         // Generate a new OTP
         const otp = crypto.randomInt(100000, 999999).toString();
-        const otpExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
+        const otpExpires = Date.now() + 1 * 60 * 1000; // 5 minutes
 
         user.otp = otp;
         user.otpExpires = otpExpires;
@@ -165,7 +165,7 @@ export const resendOtp = async (req, res) => {
         await sendOtpEmail(email, otp);
         res.status(200).json({ message: 'New OTP sent to email' });
     } catch (error) {
-        console.error(error);
+        // console.error(error);
         res.status(500).json({ message: 'Error resending OTP', error });
     }
 };
