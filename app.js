@@ -50,6 +50,7 @@ import messageRouter from './routes/message.js'
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/blog' , blogRouter)
 app.use('/api/v1/admin', adminRouter);
+app.use('/api/v1/gallery', galleryRouter);
 app.use('/api/v1/user', messageRouter);
 
 
