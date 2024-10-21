@@ -21,8 +21,12 @@ const blogSchema = new mongoose.Schema(
     },
     author: {
       type: String,
-      default: "Admin", // Setting default value as "Admin"
+      default: "Admin", 
       required: true,
+    },
+    date: {
+      type: Date,
+      default: Date.now, 
     },
   },
   { timestamps: true }

@@ -1,19 +1,24 @@
 import { Gallery } from '../model/gallerySchema.js'; 
-import { uploadOnCloudinary } from '../utils/cloudinary.js'; // Adjust path as needed
+import { uploadOnCloudinary } from '../utils/cloudinary.js'; 
 
 // Create a new gallery item
 export const createGalleryItem = async (req, res) => {
     try {
         const { title } = req.body;
-        const localFilePath = req.file.path; // Assuming you're using multer to upload images
+        const localFilePath = req.file.path; 
 
         // Upload image to Cloudinary
         const uploadResult = await uploadOnCloudinary(localFilePath, 'gallery');
-        const image = uploadResult.url; // Get the image URL from Cloudinary
+        const image = uploadResult.url; 
 
         const galleryItem = new Gallery({ title, image });
         await galleryItem.save();
-        res.status(201).json({ message: 'Gallery item created successfully', galleryItem });
+
+        res.status(201).json({ 
+            message: 'Gallery  created successfully', 
+            uploadMessage: 'Image uploaded successfully!',
+            galleryItem 
+        });
     } catch (error) {
         res.status(500).json({ message: 'Error creating gallery item', error });
     }
@@ -47,10 +52,10 @@ export const updateGalleryItemById = async (req, res) => {
         let image;
 
         if (req.file) {
-            const localFilePath = req.file.path; // Assuming you're using multer to upload images
+            const localFilePath = req.file.path; 
             // Upload new image to Cloudinary
             const uploadResult = await uploadOnCloudinary(localFilePath, 'gallery');
-            image = uploadResult.url; // Get the new image URL from Cloudinary
+            image = uploadResult.url; 
         }
 
         const updatedGalleryItem = await Gallery.findByIdAndUpdate(
@@ -60,10 +65,14 @@ export const updateGalleryItemById = async (req, res) => {
         );
 
         if (!updatedGalleryItem) {
-            return res.status(404).json({ message: 'Gallery item not found' });
+            return res.status(404).json({ message: 'Gallery  not found' });
         }
 
-        res.status(200).json({ message: 'Gallery item updated successfully', updatedGalleryItem });
+        res.status(200).json({ 
+            message: 'Gallery updated successfully', 
+            uploadMessage: image ? 'Image uploaded successfully!' : 'No new image uploaded.', 
+            updatedGalleryItem 
+        });
     } catch (error) {
         res.status(500).json({ message: 'Error updating gallery item', error });
     }
@@ -72,11 +81,12 @@ export const updateGalleryItemById = async (req, res) => {
 
 
 
+
 // Get all gallery items
 export const getAllGalleryItems = async (req, res) => {
     try {
         const galleryItems = await Gallery.find().sort({ createdAt: -1 }); // Sort by latest first
-        res.status(200).json(galleryItems);
+        res.status(200).json({message: "All Gallery item retrieved" , galleryItems});
     } catch (error) {
         res.status(500).json({ message: 'Error fetching gallery items', error });
     }
@@ -100,7 +110,7 @@ export const deleteGalleryItemById = async (req, res) => {
             return res.status(404).json({ message: 'Gallery item not found' });
         }
 
-        res.status(200).json({ message: 'Gallery item deleted successfully' });
+        res.status(200).json({ message: 'Image deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Error deleting gallery item', error });
     }

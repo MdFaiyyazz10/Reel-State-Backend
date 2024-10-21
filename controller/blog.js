@@ -1,7 +1,6 @@
 import { Blog } from '../model/blog.js';
-import { uploadOnCloudinary } from '../utils/cloudinary.js'; // Adjust path as needed
-import generateSlug from '../utils/generateSlug.js'; // Ensure this utility function is imported
-
+import { uploadOnCloudinary, deleteFromCloudinary } from '../utils/cloudinary.js';
+import generateSlug from '../utils/generateSlug.js';
 
 export const createBlog = async (req, res) => {
   try {
@@ -18,7 +17,6 @@ export const createBlog = async (req, res) => {
       image = uploadResult.url;
     }
 
-    // Generate slug using the title
     const slug = generateSlug(title);
 
     const blog = new Blog({ title, content, image, slug });
@@ -30,15 +28,25 @@ export const createBlog = async (req, res) => {
   }
 };
 
-
 export const getAllBlogs = async (req, res) => {
   try {
-    const blogs = await Blog.find().sort({ createdAt: -1 }); // Sort by latest first
-    res.status(200).json(blogs);
+    const blogs = await Blog.find().sort({ createdAt: -1 });
+    res.status(200).json({ message: "All Blogs retrieved", blogs });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching blogs', error });
   }
 };
+
+
+export const getLatestBlogs = async (req, res) => {
+  try {
+    const blogs = await Blog.find().sort({ createdAt: -1 }).limit(3);
+    res.status(200).json({ message: "Latest Blogs retrieved", blogs });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching blogs', error });
+  }
+};
+
 
 export const getBlogBySlug = async (req, res) => {
   try {
@@ -55,9 +63,10 @@ export const getBlogBySlug = async (req, res) => {
   }
 };
 
-export const updateBlogBySlug = async (req, res) => {
+// Update blog by ID
+export const updateBlogById = async (req, res) => {
   try {
-    const { slug } = req.params;
+    const { id } = req.params;
     const { title, content } = req.body;
     let image = '';
 
@@ -71,8 +80,8 @@ export const updateBlogBySlug = async (req, res) => {
       image = uploadResult.url;
     }
 
-    const updatedBlog = await Blog.findOneAndUpdate(
-      { slug },
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      id,
       { title, content, image, slug: generateSlug(title) },
       { new: true, runValidators: true }
     );
@@ -97,10 +106,11 @@ export const deleteBlogById = async (req, res) => {
     }
 
     // Optionally, delete image from Cloudinary if needed
-    await deleteFromCloudinary(deletedBlog.image); // Uncomment if you want to delete the image from Cloudinary
+    await deleteFromCloudinary(deletedBlog.image);
 
     res.status(200).json({ message: 'Blog deleted successfully' });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: 'Error deleting blog', error });
   }
 };
