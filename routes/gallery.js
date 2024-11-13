@@ -1,6 +1,6 @@
 import express from 'express';
 import { upload } from '../middleware/multer.js'; // Import multer middleware for handling file uploads
-import { createGalleryItem, getAllGalleryItems, getGalleryItemById, updateGalleryItemById, deleteGalleryItemById } from '../controller/gallery.js'; // Import gallery controllers
+import { createGalleryItem, getAllGalleryItems, getGalleryItemById, updateGalleryItemById, deleteGalleryItemById, getAllGallery } from '../controller/gallery.js'; // Import gallery controllers
 import { adminAuth } from '../middleware/adminAuth.js'; // Import admin authentication middleware
 
 const router = express.Router();
@@ -10,6 +10,7 @@ router.post('/create', adminAuth, upload, createGalleryItem);
 
 // Route to get all gallery items (accessible to all users)
 router.get('/get-all-gallery', getAllGalleryItems);
+router.get('/all-gallery', getAllGallery);
 
 // Route to get a gallery item by ID (accessible to all users)
 router.get('/:id', getGalleryItemById);

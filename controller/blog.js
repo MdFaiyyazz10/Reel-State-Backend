@@ -114,3 +114,38 @@ export const deleteBlogById = async (req, res) => {
     res.status(500).json({ message: 'Error deleting blog', error });
   }
 };
+
+
+
+export const getBlogsWithPagination = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, search = '' } = req.query;
+
+    // Convert page and limit to integers
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
+    // Build query for searching
+    const query = search ? { title: { $regex: search, $options: 'i' } } : {};
+
+    // Fetch blogs with pagination and search
+    const blogs = await Blog.find(query)
+      .sort({ createdAt: -1 })
+      .skip((pageNumber - 1) * limitNumber)
+      .limit(limitNumber);
+
+    // Get total count of blogs
+    const totalBlogs = await Blog.countDocuments(query);
+    const totalPages = Math.ceil(totalBlogs / limitNumber);
+
+    res.status(200).json({
+      message: 'Blogs retrieved successfully',
+      blogs,
+      totalBlogs,
+      totalPages,
+      currentPage: pageNumber,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching blogs', error });
+  }
+};

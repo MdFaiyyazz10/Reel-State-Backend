@@ -5,7 +5,7 @@ export const adminAuth = async (req, res, next) => {
     const token = req.cookies.admin_token;
 
     if (!token) {
-        return res.status(401).json({ message: 'No token, authorization denied' });
+        return res.status(401).json({ message: 'Authorization denied Only Admin can Access this Route' });
     }
 
     try {
@@ -13,7 +13,7 @@ export const adminAuth = async (req, res, next) => {
         const admin = await Admin.findById(decoded.id);
 
         if (!admin) {
-            return res.status(404).json({ message: 'Admin not found' });
+            return res.status(404).json({message: 'Admin not Found'})
         }
 
         if (admin.role !== 'admin') {

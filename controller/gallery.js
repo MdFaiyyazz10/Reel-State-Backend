@@ -93,6 +93,17 @@ export const getAllGalleryItems = async (req, res) => {
 };
 
 
+// Get all gallery items
+export const getAllGallery = async (req, res) => {
+    try {
+        const galleryItems = await Gallery.find().sort({ createdAt: -1 });
+        res.status(200).json({message: "All Gallery item retrieved" , galleryItems});
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching gallery items', error });
+    }
+};
+
+
 
 
 

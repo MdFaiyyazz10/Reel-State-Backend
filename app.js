@@ -42,12 +42,15 @@ app.use(cors({
 // Routes
 import blogRouter from './routes/blog.js'
 import userRouter from './routes/user.js'
+import partnerRouter from './routes/partner.js'
 import adminRouter from './routes/admin.js'
 import galleryRouter from './routes/gallery.js'
 import messageRouter from './routes/message.js'
+import passwordRoutes from './routes/emailOTP.js'
 
-
-app.use('/api/v1/user', userRouter);
+app.use('/api/v1/password', passwordRoutes); // Email OTP Verification 
+app.use('/api/v1/agent', userRouter);
+app.use('/api/v1/partner', partnerRouter);
 app.use('/api/v1/blog' , blogRouter)
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/gallery', galleryRouter);

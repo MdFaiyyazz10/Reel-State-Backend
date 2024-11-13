@@ -1,18 +1,16 @@
 import mongoose from "mongoose";
 import validator from "validator";
-import bcrypt from "bcryptjs";
 
-const agentSchema = new mongoose.Schema({
+
+
+
+const partnerSchema = new mongoose.Schema({
     sponsorId: {
         type: String,
         required: [true, "Please enter a sponsor id"],
         unique: [true, "Sponsor id must be unique"],
     },
-    referralLink: { // New field for referral link
-        type: String,
-        required: false,
-        unique: true
-    },
+   
     name: {
         type: String,
         required: true,
@@ -34,12 +32,12 @@ const agentSchema = new mongoose.Schema({
             message: "Password must contain at least one uppercase letter and one special character"
         }
     },
-    phoneNumber:{
+    phoneNumber: {
         type: String
     },
     role: {
         type: String,
-        enum: ["agent", "partner"],
+        enum: ["partner"],
         required: [true, "Please select a role"],
     },
     aadhaarNumber: {
@@ -68,75 +66,12 @@ const agentSchema = new mongoose.Schema({
     otpExpires: {
         type: Date,
     },
-    referredUsers: [
+    referredBy: [ 
         {
-            userId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: "Agent",
-            },
-            registeredAt: {
-                type: Date,
-                default: Date.now,
-            },
-        },
+            type: mongoose.Schema.Types.ObjectId,
+            ref: ['Agent', 'Admin'],  
+        }
     ],
-
-    //  KYC 
-    dob: {
-        type: Date,
-        default: null 
-    },
-    country: {
-        type: String,
-        default: null 
-    },
-    state: {
-        type: String,
-        default: null 
-    },
-    city: {
-        type: String,
-        default: null 
-    },
-    
-    bankDetails: {
-        bankName: String,
-        accountHolderName: String,
-        accountNumber: String,
-        ifsc: String,
-        branch: String
-    },
-    profileImage: {
-        type: String,
-        default: null 
-    },
-    panPhoto: {
-        type: String,
-        default: null 
-    },
-    aadhaarPhoto: {
-        type: String,
-        default: null 
-    },
-    cancelledCheque: {
-        type: String,
-        default: null  
-    },
-      // New Gender Field
-      gender: {
-        type: String,
-        enum: ['male', 'female'], // Only allow 'male' or 'female'
-        // required: [true, 'Please select a gender'],
-    }
-    
 }, { timestamps: true });
 
-// Generate a referral link using sponsorId
-agentSchema.pre('save', function (next) {
-    if (this.isNew) {
-        this.referralLink = `http://localhost:5173/user/login?referral=${this.sponsorId}`;
-    }
-    next();
-});
-
-export const Agent = mongoose.model("Agent", agentSchema);
+export const Partner = mongoose.model("Partner", partnerSchema);

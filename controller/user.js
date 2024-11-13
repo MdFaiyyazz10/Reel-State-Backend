@@ -1,40 +1,85 @@
 import jwt from 'jsonwebtoken'; 
 import bcrypt from 'bcryptjs';
-import { User } from '../model/user.js';
-import { sendOtpEmail } from '../utils/emailServices.js';
+import { Agent } from '../model/user.js'; 
+import { Admin } from '../model/admin.js'; 
 import crypto from 'crypto';
 import validator from 'validator';
+import { generateSponsorId } from '../utils/sponsorId.js';
+import { uploadOnCloudinary } from '../utils/cloudinary.js'; 
+import mongoose from 'mongoose';
 
-export const registerUser = async (req, res) => {
+
+export const registerAgent = async (req, res) => {
     try {
-        const { name, email, phone, password } = req.body;
+        const { sponsorId, name, email, phoneNumber, password, aadhaarNumber, panCard, role } = req.body;
 
-        // Check if the user already exists
-        let user = await User.findOne({ email });
-        if (user) {
-            return res.status(400).json({ message: 'User already exists' });
+        if (!["agent", "partner"].includes(role)) {
+            return res.status(400).json({ success: false, message: "Invalid role selected. Must be either 'agent' or 'partner'." });
         }
 
-        // Validate phoneNumber
-        if (phone && !validator.matches(phone, /^\d{10}$/)) {
+        let agent = await Agent.findOne({ email });
+        if (agent) {
+            return res.status(400).json({ success: false, message: 'Agent already exists' });
+        }
+
+        if (phoneNumber && !validator.matches(phoneNumber, /^\d{10}$/)) {
             return res.status(400).json({ success: false, message: "Invalid phone number format. Must be 10 digits." });
         }
 
-        // Validate password
         if (password.length < 8) {
             return res.status(400).json({ success: false, message: "Password must be at least 8 characters" });
         }
 
-        // Hash the password
+        const uniqueSponsorId = await generateSponsorId(Agent);
+
         const hashedPassword = bcrypt.hashSync(password, 10);
 
-        // Create new user
-        user = new User({ name, email, phone, password: hashedPassword });
-        await user.save();
+        agent = new Agent({
+            sponsorId: uniqueSponsorId,
+            name,
+            email,
+            phoneNumber,
+            password: hashedPassword,
+            aadhaarNumber,
+            panCard,
+            role,
+        });
 
-        res.status(201).json({ success: true, message: 'User registered successfully' });
+        await agent.save();
+
+        if (sponsorId) {
+            const adminReferrer = await Admin.findOne({ sponsorId });
+            if (adminReferrer) {
+                adminReferrer.referredUsers.push({
+                    userId: agent._id,
+                    registeredAt: new Date(),
+                });
+                await adminReferrer.save();
+            } else {
+                const agentReferrer = await Agent.findOne({ sponsorId });
+                if (agentReferrer) {
+                    agentReferrer.referredUsers.push({
+                        userId: agent._id,
+                        registeredAt: new Date(),
+                    });
+                    await agentReferrer.save();
+                }
+            }
+        }
+
+        agent.referralLink = `http://localhost:5173/login?sponsor=${uniqueSponsorId}`;
+        
+        await agent.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'Agent registered successfully',
+            referralLink: agent.referralLink,
+            agent
+        });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message, error });
+        console.error("Error in registration:", error.message);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
@@ -46,10 +91,10 @@ export const signIn = async (req, res) => {
             return res.status(400).json({ success: false, message: "Please fill all fields" });
         }
 
-        const user = await User.findOne({ email });
+        const user = await Agent.findOne({ email });
 
         if (!user) {
-            return res.status(401).json({ success: false, message: "User Not Found" });
+            return res.status(401).json({ success: false, message: "Agent Not Found" });
         }
 
         const validPassword = bcrypt.compareSync(password, user.password);
@@ -58,12 +103,11 @@ export const signIn = async (req, res) => {
             return res.status(401).json({ success: false, message: "Invalid Credentials" });
         }
 
-        // Generating token
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET_KEY, { expiresIn: '7d' });
 
         const expireDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-        return res.status(200).cookie("user_token", token, {
+        return res.status(200).cookie("agent_token", token, {
             httpOnly: true,
             expires: expireDate
         }).json({ success: true, message: "Logged In Successfully", user, token });
@@ -72,102 +116,64 @@ export const signIn = async (req, res) => {
     }
 };
 
-export const requestForgetPassword = async (req, res) => {
-    try {
-        const { email } = req.body;
 
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+
+export const updateAgent = async (req, res) => {
+    try {
+        const { name, dob, country, state, city, bankDetails, panPhoto, aadhaarPhoto, cancelledCheque, gender } = req.body;
+        const agentId = req.params.id;  // Get agentId from URL parameter
+
+        // Validate if the agentId is a valid MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(agentId)) {
+            return res.status(400).json({ success: false, message: "Invalid agent ID" });
         }
 
-        const otp = crypto.randomInt(100000, 999999).toString();
-        const otpExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
+        // Find the agent by agentId
+        const agent = await Agent.findById(agentId);
+        if (!agent) {
+            return res.status(404).json({ success: false, message: "Agent not found" });
+        }
 
-        user.otp = otp;
-        user.otpExpires = otpExpires;
-        await user.save();
+        // Update the agent's details
+        if (name) agent.name = name;
+        if (dob) agent.dob = dob;
+        if (country) agent.country = country;
+        if (state) agent.state = state;
+        if (city) agent.city = city;
+        if (gender) agent.gender = gender;
+        if (bankDetails) agent.bankDetails = { ...agent.bankDetails, ...bankDetails };
 
-        await sendOtpEmail(email, otp);
-        res.status(200).json({ message: 'OTP sent to email' });
+        // Handle file uploads (if any)
+        if (req.file) {
+            const uploadedFile = await uploadOnCloudinary(req.file.path, 'kyc_documents');
+            if (uploadedFile) {
+                // Update the field based on the uploaded file
+                if (req.body.documentType === 'profileImage') {
+                    agent.profileImage = uploadedFile.url;
+                } else if (req.body.documentType === 'panPhoto') {
+                    agent.panPhoto = uploadedFile.url;
+                } else if (req.body.documentType === 'aadhaarPhoto') {
+                    agent.aadhaarPhoto = uploadedFile.url;
+                } else if (req.body.documentType === 'cancelledCheque') {
+                    agent.cancelledCheque = uploadedFile.url;
+                }
+            } else {
+                return res.status(500).json({ success: false, message: "Error uploading file to Cloudinary" });
+            }
+        }
+
+        // Save the updated agent document
+        await agent.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Agent profile updated successfully",
+            agent,
+        });
+
     } catch (error) {
-        res.status(500).json({ message: 'Error requesting password reset', error });
+        console.error("Error in updating agent:", error.message);
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
-export const verifyResetOtp = async (req, res) => {
-    try {
-        const { email, otp } = req.body;
-
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        if (user.otp !== otp) {
-            return res.status(400).json({ message: 'Invalid OTP' });
-        }
-        if (user.otpExpires < Date.now()) {
-            return res.status(400).json({ message: 'OTP has expired' });
-        }
-
-        res.status(200).json({ message: 'OTP verified, you can reset your password', userId: user._id });
-    } catch (error) {
-        res.status(500).json({ message: 'Error verifying OTP', error });
-    }
-};
-
-export const resetPassword = async (req, res) => {
-    try {
-        const { userId, newPassword, confirmPassword } = req.body; // Use userId from request
-
-        // Validate input
-        if (!userId || !newPassword || !confirmPassword) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-
-        if (newPassword !== confirmPassword) {
-            return res.status(400).json({ message: 'Passwords do not match' });
-        }
-
-        const user = await User.findById(userId); // Find user by ID
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        const hashedPassword = bcrypt.hashSync(newPassword, 10);
-        user.password = hashedPassword;
-        user.otp = undefined; // Clear OTP and expiration after resetting
-        user.otpExpires = undefined;
-        await user.save();
-
-        res.status(200).json({ message: 'Password reset successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error resetting password', error });
-    }
-};
-
-// New resendOtp function
-export const resendOtp = async (req, res) => {
-    try {
-        const { email } = req.body;
-
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        // Generate a new OTP
-        const otp = crypto.randomInt(100000, 999999).toString();
-        const otpExpires = Date.now() + 5 * 60 * 1000; // 5 minutes
-
-        user.otp = otp;
-        user.otpExpires = otpExpires;
-        await user.save();
-
-        await sendOtpEmail(email, otp);
-        res.status(200).json({ message: 'New OTP sent to email' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error resending OTP', error });
-    }
-};

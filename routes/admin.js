@@ -1,12 +1,15 @@
 import express from 'express';
-import {  signIn, signUp } from '../controller/admin.js'; // Adjust the path as per your folder structure
+import { getReferredUsers, logout, signIn, signUp } from '../controller/admin.js'; 
+import { adminAuth } from '../middleware/adminAuth.js';
 
 const router = express.Router();
 
-// Route for registering a new admin
 router.post('/signup', signUp);
 
-// Route for admin login
 router.post('/signin', signIn);
+
+router.delete('/logout', logout);
+
+router.get('/referred-users', adminAuth, getReferredUsers);
 
 export default router;
