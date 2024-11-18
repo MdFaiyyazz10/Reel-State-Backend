@@ -11,7 +11,7 @@ const agentSchema = new mongoose.Schema({
     referralLink: { // New field for referral link
         type: String,
         required: false,
-        unique: true
+        unique: true,
     },
     name: {
         type: String,
@@ -21,7 +21,7 @@ const agentSchema = new mongoose.Schema({
         type: String,
         required: [true, "Please enter an email"],
         unique: [true, "Email already exists"],
-        validate: [validator.isEmail, "Please enter a valid email"]
+        validate: [validator.isEmail, "Please enter a valid email"],
     },
     password: {
         type: String,
@@ -31,11 +31,11 @@ const agentSchema = new mongoose.Schema({
             validator: function (value) {
                 return /[A-Z]/.test(value) && /[!@#$%^&*(),.?":{}|<>]/.test(value);
             },
-            message: "Password must contain at least one uppercase letter and one special character"
-        }
+            message: "Password must contain at least one uppercase letter and one special character",
+        },
     },
-    phoneNumber:{
-        type: String
+    phoneNumber: {
+        type: String,
     },
     role: {
         type: String,
@@ -59,8 +59,8 @@ const agentSchema = new mongoose.Schema({
             validator: function (value) {
                 return /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(value);
             },
-            message: "Please enter a valid PAN card number"
-        }
+            message: "Please enter a valid PAN card number",
+        },
     },
     otp: {
         type: String,
@@ -81,54 +81,70 @@ const agentSchema = new mongoose.Schema({
         },
     ],
 
-    //  KYC 
+    // KYC 
     dob: {
         type: Date,
-        default: null 
+        default: null,
     },
     country: {
         type: String,
-        default: null 
+        default: null,
     },
     state: {
         type: String,
-        default: null 
+        default: null,
     },
     city: {
         type: String,
-        default: null 
+        default: null,
     },
-    
-    bankDetails: {
-        bankName: String,
-        accountHolderName: String,
-        accountNumber: String,
-        ifsc: String,
-        branch: String
+
+    // Bank Details
+    bankName: {
+        type: String,
+        default: null,
     },
+    accountHolderName: {
+        type: String,
+        default: null,
+    },
+    accountNumber: {
+        type: String,
+        default: null,
+    },
+    ifsc: {
+        type: String,
+        default: null,
+    },
+    branch: {
+        type: String,
+        default: null,
+    },
+
+    // Profile Images and Documents
     profileImage: {
         type: String,
-        default: null 
+        default: null,
     },
     panPhoto: {
         type: String,
-        default: null 
+        default: null,
     },
     aadhaarPhoto: {
         type: String,
-        default: null 
+        default: null,
     },
     cancelledCheque: {
         type: String,
-        default: null  
+        default: null,
     },
-      // New Gender Field
-      gender: {
+
+    // New Gender Field
+    gender: {
         type: String,
         enum: ['male', 'female'], // Only allow 'male' or 'female'
         // required: [true, 'Please select a gender'],
-    }
-    
+    },
 }, { timestamps: true });
 
 // Generate a referral link using sponsorId
